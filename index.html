@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kumar’s Notebook · Property Broker Memory Agent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Hind+Madurai:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#eef2f6; --card:#fff; --ink:#14213d; --mute:#5d6b82; --line:#d9e0ea;
+  --teal:#0e7c86; --teal-soft:#d8f0f1; --marigold:#f2a900; --mari-soft:#fff3d1;
+  --red:#c8372d; --red-soft:#fde4e1; --green:#1f8a4c; --green-soft:#dcf3e5;
+}
+*{box-sizing:border-box;margin:0}
+body{font:500 15px/1.5 "Hind Madurai",system-ui,sans-serif;background:var(--paper);color:var(--ink);min-height:100vh}
+h1,h2,h3,.disp{font-family:"Bricolage Grotesque","Hind Madurai",sans-serif;letter-spacing:-.01em}
+button{font:inherit;cursor:pointer;border:0;border-radius:10px;padding:9px 16px;font-weight:600}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--marigold);outline-offset:2px}
+.app{display:grid;grid-template-columns:270px 1fr;min-height:100vh}
+aside{background:var(--ink);color:#e8edf6;padding:22px 16px;display:flex;flex-direction:column;gap:18px}
+.brand{display:flex;gap:10px;align-items:center}
+.brand b{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:var(--marigold);color:var(--ink);font:800 20px "Bricolage Grotesque"}
+.brand h1{font-size:17px;line-height:1.1}
+.brand small{color:#9fb0cc;font-size:12px}
+.live{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;background:#1f2f52;border-radius:999px;padding:6px 12px;width:fit-content}
+.live i{width:9px;height:9px;border-radius:50%;background:#7b8aa8}
+.live.on i{background:#3ddc84;box-shadow:0 0 0 3px #3ddc8433}
+.live.off i{background:var(--marigold)}
+.clients{display:flex;flex-direction:column;gap:6px}
+.cl{display:flex;gap:10px;align-items:center;text-align:left;background:transparent;color:#e8edf6;padding:10px;border-radius:12px;width:100%}
+.cl:hover{background:#1f2f52}
+.cl.on{background:#fff;color:var(--ink)}
+.av{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font:700 14px "Bricolage Grotesque";background:var(--teal);color:#fff;flex:none}
+.cl small{display:block;color:#93a4c2;font-weight:500}
+.cl.on small{color:var(--mute)}
+.memnote{margin-top:auto;font-size:12.5px;color:#9fb0cc;border-top:1px solid #2b3d63;padding-top:14px}
+main{padding:28px 34px 60px;max-width:1180px}
+.top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap}
+.top h2{font-size:34px;font-weight:800;line-height:1.1}
+.top p{color:var(--mute);margin-top:4px}
+.acts{display:flex;gap:10px;flex-wrap:wrap}
+.btn1{background:var(--ink);color:#fff}.btn1:hover{background:#22345f}
+.btn2{background:var(--marigold);color:var(--ink)}.btn2:hover{filter:brightness(.95)}
+.btn3{background:#fff;color:var(--ink);border:1px solid var(--line)}
+.kpis{display:flex;gap:12px;margin:22px 0;flex-wrap:wrap}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 18px;min-width:150px}
+.kpi b{display:block;font:800 26px "Bricolage Grotesque"}
+.kpi span{color:var(--mute);font-size:13px}
+.kpi.hot{background:var(--ink);color:#fff;border-color:var(--ink)}
+.kpi.hot span{color:#a9b9d6}
+.hero{display:grid;grid-template-columns:1fr 1.3fr;gap:0;border-radius:22px;overflow:hidden;border:1px solid var(--line);background:var(--card)}
+.hero>div{padding:26px}
+.says{background:var(--mari-soft)}
+.hero h3{font-size:13px;color:var(--mute);font-weight:700;margin-bottom:12px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:#fff;border:1px solid #ecd9a0;border-radius:999px;padding:6px 14px;font:700 17px "Bricolage Grotesque"}
+.empty{color:var(--mute)}
+.bars{display:flex;flex-direction:column;gap:10px}
+.bar{display:grid;grid-template-columns:150px 1fr 38px;gap:10px;align-items:center;font-weight:600}
+.bar i{display:block;height:14px;border-radius:7px;background:var(--line);overflow:hidden}
+.bar i u{display:block;height:100%;background:var(--red);border-radius:7px;transition:width .6s cubic-bezier(.2,.8,.2,1)}
+.bar.pri i u{background:var(--teal)}
+.bar.pri span::after{content:" ✓ priority";color:var(--teal);font-size:12px}
+.verdict{margin-top:16px;background:var(--teal-soft);border-radius:12px;padding:12px 14px;font-weight:600}
+.insight{margin-top:10px;background:#fff;border:1px dashed var(--teal);border-radius:12px;padding:12px 14px;font-size:14px;white-space:pre-wrap}
+.insight b{display:block;color:var(--teal);font-size:12px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.cols{display:grid;grid-template-columns:1fr 1.2fr;gap:22px;margin-top:22px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:22px}
+.panel h3{font-size:20px;margin-bottom:4px}
+.panel>p{color:var(--mute);margin-bottom:14px;font-size:14px}
+.tl{list-style:none;padding:0;position:relative;display:flex;flex-direction:column;gap:12px}
+.tl::before{content:"";position:absolute;left:11px;top:6px;bottom:6px;width:2px;background:var(--line)}
+.tl li{position:relative;padding-left:36px}
+.tl li::before{content:"";position:absolute;left:4px;top:5px;width:16px;height:16px;border-radius:50%;background:var(--red);border:3px solid #fff;box-shadow:0 0 0 1px var(--line)}
+.tl li.ok::before{background:var(--green)}
+.tl b{display:block}
+.tl small{color:var(--mute)}
+.tag{display:inline-block;background:var(--red-soft);color:var(--red);border-radius:6px;padding:1px 8px;font-size:12.5px;font-weight:700;margin:3px 4px 0 0}
+.cmp{display:flex;gap:10px;margin-bottom:14px;font-weight:600;flex-wrap:wrap}
+.cmp span{border-radius:10px;padding:6px 12px;background:var(--paper)}
+.cmp .win{background:var(--green-soft);color:var(--green)}
+.cards{display:flex;flex-direction:column;gap:12px}
+.lc{border:1px solid var(--line);border-radius:16px;padding:14px 16px;display:flex;justify-content:space-between;gap:12px;align-items:center;animation:pop .35s ease}
+.lc.good{border-color:var(--teal);background:linear-gradient(90deg,var(--teal-soft),#fff 60%)}
+.lc h4{font:700 17px "Bricolage Grotesque"}
+.lc small{color:var(--mute)}
+.ok-t{color:var(--teal);font-weight:700;font-size:13px;display:block;margin-top:4px}
+@keyframes pop{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
+dialog{border:0;border-radius:20px;padding:26px;width:min(480px,92vw);box-shadow:0 30px 80px #14213d55;margin:auto}
+dialog::backdrop{background:#14213d88}
+dialog h3{font-size:22px;margin-bottom:14px}
+label{display:block;font-weight:600;margin:12px 0 6px}
+select{width:100%;padding:10px;border-radius:10px;border:1px solid var(--line);font:inherit;background:#fff}
+.seg{display:flex;gap:8px}
+.seg label,.rs label{margin:0;position:relative}
+.seg label{flex:1}
+.seg input,.rs input{position:absolute;opacity:0}
+.seg span{display:block;text-align:center;padding:10px;border-radius:10px;border:1px solid var(--line);cursor:pointer}
+.seg input:checked+span{background:var(--ink);color:#fff;border-color:var(--ink)}
+.rs{display:flex;gap:8px;flex-wrap:wrap}
+.rs span{display:inline-block;padding:6px 12px;border-radius:999px;border:1px solid var(--line);cursor:pointer}
+.rs input:checked+span{background:var(--red-soft);border-color:var(--red);color:var(--red)}
+.seg input:focus-visible+span,.rs input:focus-visible+span{outline:3px solid var(--marigold)}
+.dact{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
+.toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,40px);background:var(--ink);color:#fff;padding:12px 20px;border-radius:12px;opacity:0;transition:.3s;font-weight:600;max-width:90vw;z-index:9}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+@media(max-width:900px){.app{grid-template-columns:1fr}aside{flex-direction:row;overflow-x:auto;align-items:center}.clients{flex-direction:row}.memnote,.brand small{display:none}.hero,.cols{grid-template-columns:1fr}main{padding:20px 16px 60px}.bar{grid-template-columns:120px 1fr 30px}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside>
+    <div class="brand"><b>K</b><div><h1>Kumar’s Notebook</h1><small>Broker memory agent</small></div></div>
+    <div class="live" id="live"><i></i><span>Checking Hindsight…</span></div>
+    <nav class="clients" id="clients" aria-label="Clients"></nav>
+    <p class="memnote">Every site visit is retained. The agent recalls past rejections and reflects on what each client really wants.</p>
+  </aside>
+  <main>
+    <div class="top">
+      <div><h2 id="cname"></h2><p id="cdesc"></p></div>
+      <div class="acts">
+        <button class="btn3" id="reset">Reset demo data</button>
+        <button class="btn2" id="demo">▶ Play Suresh demo</button>
+        <button class="btn1" id="log">+ Log site visit</button>
+      </div>
+    </div>
+    <div class="kpis" id="kpis"></div>
+    <section class="hero" aria-label="Stated versus real preference">
+      <div class="says"><h3>What the client says</h3><div class="chips" id="says"></div></div>
+      <div><h3>What the client really wants (learned from rejections)</h3><div class="bars" id="bars"></div><div class="verdict" id="verdict" hidden></div><div class="insight" id="insight" hidden></div></div>
+    </section>
+    <div class="cols">
+      <section class="panel"><h3>Visit memory</h3><p>Everything the agent has retained for this client.</p><ul class="tl" id="tl"></ul></section>
+      <section class="panel"><h3>Show next</h3><p id="sugsub"></p><div class="cmp" id="cmp"></div><div class="cards" id="cards"></div></section>
+    </div>
+  </main>
+</div>
+
+<dialog id="dlg">
+  <form method="dialog" id="form">
+    <h3>Log site visit</h3>
+    <label for="lsel">Property shown</label><select id="lsel"></select>
+    <label>Client reaction</label>
+    <div class="seg"><label><input type="radio" name="re" value="rejected" checked><span>Rejected</span></label><label><input type="radio" name="re" value="liked"><span>Liked it</span></label></div>
+    <label>Reject reasons</label>
+    <div class="rs" id="rs"></div>
+    <div class="dact"><button type="button" class="btn3" id="cancel">Cancel</button><button type="submit" class="btn1">Save to memory</button></div>
+  </form>
+</dialog>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+/* ---------- Data ---------- */
+const CLIENTS=[
+ {id:"suresh",name:"Suresh Kumar",area:"Velachery",bhk:3,budget:15000},
+ {id:"priya",name:"Priya Raman",area:"Adyar",bhk:2,budget:20000},
+ {id:"arun",name:"Arun Prakash",area:"Velachery",bhk:3,budget:16000}
+];
+const LISTINGS=[
+ {id:"L1",name:"Gandhi Nagar, 2nd St",area:"Velachery",bhk:3,rent:14500,parking:false,facing:"S",floor:0,road:"narrow"},
+ {id:"L2",name:"Vijayanagar Main Rd",area:"Velachery",bhk:3,rent:15000,parking:false,facing:"W",floor:1,road:"wide"},
+ {id:"L3",name:"Taramani Link Rd",area:"Velachery",bhk:3,rent:14800,parking:true,facing:"S",floor:2,road:"wide"},
+ {id:"L4",name:"Dhandeeswaram Nagar",area:"Velachery",bhk:3,rent:15000,parking:false,facing:"N",floor:1,road:"wide"},
+ {id:"L5",name:"Baby Nagar, 4th Cross",area:"Velachery",bhk:3,rent:15000,parking:true,facing:"E",floor:2,road:"wide"},
+ {id:"L6",name:"Keelkattalai Colony",area:"Velachery",bhk:3,rent:13500,parking:true,facing:"N",floor:1,road:"wide"},
+ {id:"L7",name:"Lattice Bridge Rd",area:"Adyar",bhk:2,rent:17000,parking:true,facing:"E",floor:0,road:"wide"},
+ {id:"L8",name:"Besant Nagar, 3rd Ave",area:"Adyar",bhk:2,rent:19500,parking:true,facing:"N",floor:3,road:"wide"},
+ {id:"L9",name:"Kasturibai Nagar",area:"Adyar",bhk:2,rent:18000,parking:true,facing:"S",floor:0,road:"wide"},
+ {id:"L10",name:"Indira Nagar, 1st Main",area:"Adyar",bhk:2,rent:17500,parking:true,facing:"E",floor:2,road:"wide"}
+];
+const REASONS={parking:"No parking",vaasthu:"Not north/east facing",floor:"Ground floor",road:"Narrow road",budget:"Over budget"};
+const PRIORITY={parking:"Parking",vaasthu:"North / east facing",floor:"Not ground floor",road:"Wide road",budget:"Within budget"};
+const DEMO={
+ suresh:[["L1","rejected",["parking","vaasthu","road"]],["L2","rejected",["parking","vaasthu"]],["L3","rejected",["vaasthu"]],["L4","rejected",["parking"]]],
+ priya:[["L7","rejected",["floor"]],["L9","rejected",["floor"]]]
+};
+const byId=id=>LISTINGS.find(l=>l.id===id);
+const triggers=l=>[!l.parking&&"parking","NE".includes(l.facing)?0:"vaasthu",l.floor===0&&"floor",l.road==="narrow"&&"road"].filter(Boolean);
+
+/* ---------- Local memory (instant UI + offline fallback) ---------- */
+const Hindsight={
+  _all(){try{return JSON.parse(localStorage.getItem("pbma"))||[]}catch(e){return[]}},
+  _save(v){try{localStorage.setItem("pbma",JSON.stringify(v))}catch(e){}},
+  retain(v){const a=this._all();a.push({...v,at:Date.now()});this._save(a)},
+  recall(cid){return this._all().filter(v=>v.client===cid)},
+  clear(cid){this._save(this._all().filter(v=>v.client!==cid))},
+  reflect(cid){
+    const rej=this.recall(cid).filter(v=>v.reaction==="rejected");
+    const counts={};rej.forEach(v=>v.reasons.forEach(r=>counts[r]=(counts[r]||0)+1));
+    const priorities=Object.keys(counts).filter(k=>counts[k]>=2).sort((a,b)=>counts[b]-counts[a]);
+    return{rejects:rej.length,counts,priorities};
+  }
+};
+
+/* ---------- Real Hindsight (through server.js, key stays on the server) ----------
+   Every retained visit is also sent to Hindsight. "Reflect" asks Hindsight itself
+   what the client really wants. If the server is down, the app keeps working locally. */
+const Remote={
+  ok:false, q:Promise.resolve(),
+  async post(path,body){
+    const r=await fetch(path,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+    if(!r.ok)throw new Error("HTTP "+r.status);
+    return r.json();
+  },
+  async ping(){
+    try{const r=await fetch("/api/health");this.ok=r.ok}catch(e){this.ok=false}
+    setLive();
+  },
+  stated(c){return `${c.area}, ${c.bhk} BHK, up to ${money(c.budget)}`},
+  describe(l){return `${l.name}, ${l.area}, ${l.bhk} BHK, rent ${money(l.rent)}, ${l.facing}-facing, ${l.floor?"floor "+l.floor:"ground floor"}, parking ${l.parking?"available":"not available"}, ${l.road} road`},
+  retain(v){
+    const c=CLIENTS.find(x=>x.id===v.client),l=byId(v.property);
+    /* queue keeps the order of visits and lets reflect wait until retain finished */
+    this.q=this.q.then(async()=>{
+      try{
+        await this.post("/api/retain",{clientName:c.name,stated:this.stated(c),property:this.describe(l),reaction:v.reaction,reasons:v.reasons.map(r=>REASONS[r])});
+        this.ok=true;
+      }catch(e){console.warn("Hindsight retain failed, local memory still works",e);this.ok=false}
+      setLive();
+    });
+  },
+  async reflect(c){
+    await this.q;
+    const r=await this.post("/api/reflect",{clientName:c.name,stated:this.stated(c)});
+    return r.text;
+  }
+};
+function setLive(){
+  const e=$("live");
+  e.className="live "+(Remote.ok?"on":"off");
+  e.querySelector("span").textContent=Remote.ok?"Hindsight memory: live":"Hindsight offline (local mode)";
+}
+
+/* save = local (instant) + Hindsight (real) */
+function save(v){Hindsight.retain(v);Remote.retain(v)}
+
+/* ask Hindsight to reflect and show its answer under the local verdict */
+async function syncInsight(){
+  const c=CLIENTS.find(x=>x.id===cur),el=$("insight");
+  if(!Remote.ok||Hindsight.recall(c.id).length<2){el.hidden=true;return}
+  el.hidden=false;el.innerHTML="<b>Hindsight reflect</b>";
+  const t=document.createElement("span");t.textContent="Reflecting on past visits…";el.appendChild(t);
+  const who=cur;
+  try{
+    const text=await Remote.reflect(c);
+    if(who!==cur)return; /* client changed while waiting */
+    t.textContent=text||"No insight yet.";
+  }catch(e){el.hidden=true}
+}
+
+/* ---------- State & render ---------- */
+let cur="suresh";
+const $=id=>document.getElementById(id);
+const money=n=>"₹"+n.toLocaleString("en-IN");
+function toast(t){const e=$("toast");e.textContent=t;e.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove("show"),2600)}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+/* seed Priya/Arun locally every reset; push to Hindsight only once so the bank has no duplicates */
+const seed=()=>Object.entries(DEMO).forEach(([cid,list])=>{if(cid!=="suresh")list.forEach(([p,r,rs])=>Hindsight.retain({client:cid,property:p,reaction:r,reasons:rs}))});
+function seedRemoteOnce(){
+  let done=false;try{done=localStorage.getItem("pbma_remote_seeded")}catch(e){}
+  if(done||!Remote.ok)return;
+  DEMO.priya.forEach(([p,r,rs])=>Remote.retain({client:"priya",property:p,reaction:r,reasons:rs}));
+  try{localStorage.setItem("pbma_remote_seeded","1")}catch(e){}
+}
+
+function renderClients(){
+  $("clients").innerHTML=CLIENTS.map(c=>`<button class="cl ${c.id===cur?"on":""}" data-id="${c.id}"><span class="av">${c.name[0]}</span><span>${c.name}<small>${Hindsight.recall(c.id).length} visits remembered</small></span></button>`).join("");
+  $("clients").querySelectorAll("button").forEach(b=>b.onclick=()=>{cur=b.dataset.id;render();syncInsight()});
+}
+function render(){
+  const c=CLIENTS.find(x=>x.id===cur),mem=Hindsight.recall(c.id),ref=Hindsight.reflect(c.id);
+  $("cname").textContent=c.name;
+  $("cdesc").textContent=mem.length?`${mem.length} visits in memory`:"No visits yet. The agent starts from the stated requirement only.";
+  $("says").innerHTML=[c.area,c.bhk+" BHK","up to "+money(c.budget)].map(x=>`<span class="chip">${x}</span>`).join("");
+
+  const pool=LISTINGS.filter(l=>l.area===c.area&&l.bhk===c.bhk&&l.rent<=c.budget);
+  const seen=mem.map(v=>v.property);
+  let picks=pool.filter(l=>!seen.includes(l.id));
+  if(ref.priorities.length)picks=picks.filter(l=>!triggers(l).some(t=>ref.priorities.includes(t)));
+
+  $("kpis").innerHTML=`<div class="kpi"><b>${mem.length}</b><span>Visits so far</span></div><div class="kpi"><b>${ref.rejects}</b><span>Rejections learned from</span></div><div class="kpi"><b>${ref.priorities.length}</b><span>Hidden priorities found</span></div><div class="kpi hot"><b>12 → 4</b><span>Site visits per deal (goal)</span></div>`;
+
+  const keys=Object.keys(ref.counts).sort((a,b)=>ref.counts[b]-ref.counts[a]);
+  $("bars").innerHTML=keys.length?keys.map(k=>`<div class="bar ${ref.priorities.includes(k)?"pri":""}"><span>${REASONS[k]}</span><i><u style="width:${ref.counts[k]/ref.rejects*100}%"></u></i><b>${ref.counts[k]}/${ref.rejects}</b></div>`).join(""):`<p class="empty">Log a rejected visit and the reasons will show up here.</p>`;
+  const v=$("verdict");
+  if(ref.priorities.length){v.hidden=false;v.textContent="Real priorities: "+ref.priorities.map(p=>PRIORITY[p]).join(" + ")+". These came up in at least 2 rejections, so the agent now filters on them."}else v.hidden=true;
+
+  $("tl").innerHTML=mem.length?mem.slice().reverse().map(m=>{const l=byId(m.property);return`<li class="${m.reaction==="liked"?"ok":""}"><b>${l.name}, ${l.area}</b><small>${money(l.rent)} · ${m.reaction==="liked"?"Client liked it":"Rejected"}</small><br>${m.reasons.map(r=>`<span class="tag">${REASONS[r]}</span>`).join("")}</li>`}).join(""):`<li><small>No visits yet. Use “Log site visit” or play the demo.</small></li>`;
+
+  $("sugsub").textContent=ref.priorities.length?"Filtered by what this client has rejected before, not only by what they said.":"Not enough memory yet. Showing everything that matches the stated requirement.";
+  $("cmp").innerHTML=`<span>Portal filters: ${pool.length} listings</span><span class="${ref.priorities.length?"win":""}">With memory: ${picks.length} listing${picks.length===1?"":"s"}</span>`;
+  $("cards").innerHTML=picks.length?picks.map(l=>`<div class="lc ${ref.priorities.length?"good":""}"><div><h4>${l.name}</h4><small>${l.area} · ${l.bhk} BHK · ${money(l.rent)} · ${l.facing}-facing · floor ${l.floor||"G"}</small>${ref.priorities.length?`<span class="ok-t">✓ ${ref.priorities.map(p=>PRIORITY[p]).join(" · ")}</span>`:""}</div><button class="btn1" data-l="${l.id}">Log visit</button></div>`).join(""):`<p class="empty">No unvisited listing fits. Ask the client to relax one priority.</p>`;
+  $("cards").querySelectorAll("button").forEach(b=>b.onclick=()=>openLog(b.dataset.l));
+  renderClients();
+}
+
+/* ---------- Log visit dialog ---------- */
+function openLog(pre){
+  const c=CLIENTS.find(x=>x.id===cur);
+  $("lsel").innerHTML=LISTINGS.filter(l=>l.area===c.area).map(l=>`<option value="${l.id}">${l.name} · ${money(l.rent)}</option>`).join("");
+  if(pre)$("lsel").value=pre;
+  $("rs").innerHTML=Object.entries(REASONS).map(([k,t])=>`<label><input type="checkbox" value="${k}"><span>${t}</span></label>`).join("");
+  document.querySelector("input[name=re][value=rejected]").checked=true;
+  $("dlg").showModal();
+}
+$("log").onclick=()=>openLog();
+$("cancel").onclick=()=>$("dlg").close();
+$("form").onsubmit=()=>{
+  const re=document.querySelector("input[name=re]:checked").value;
+  const reasons=re==="liked"?[]:[...document.querySelectorAll("#rs input:checked")].map(i=>i.value);
+  save({client:cur,property:$("lsel").value,reaction:re,reasons});
+  render();syncInsight();
+  toast(re==="liked"?"Saved. This one is a match.":"Saved to memory. The agent updated its picture of this client.");
+};
+
+/* ---------- Demo ---------- */
+$("demo").onclick=async()=>{
+  cur="suresh";Hindsight.clear("suresh");$("insight").hidden=true;render();
+  toast("Visit #1: no memory yet, agent shows every listing");await sleep(1800);
+  let n=0;
+  for(const [p,r,rs] of DEMO.suresh){
+    save({client:"suresh",property:p,reaction:r,reasons:rs});render();n++;
+    toast(`Visit #${n}: rejected ${byId(p).name}`);await sleep(1500);
+  }
+  toast("Reflect: real priorities found. Only matching flats shown now.");
+  syncInsight();
+};
+$("reset").onclick=()=>{CLIENTS.forEach(c=>Hindsight.clear(c.id));seed();$("insight").hidden=true;render();toast("Local view reset. Suresh is empty so you can play the demo.")};
+
+/* ---------- Start ---------- */
+if(!Hindsight._all().length)seed();
+render();
+Remote.ping().then(()=>{seedRemoteOnce();syncInsight()});
+</script>
+</body>
+</html>
